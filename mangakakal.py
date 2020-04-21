@@ -1,8 +1,9 @@
-import bs4
-import requests
 import logging
 # from firebase import firebase
 from time import sleep
+
+import bs4
+import requests
 
 # firebase = firebase.FirebaseApplication('https://manga-aa86c.firebaseio.com/', None)
 
@@ -12,36 +13,28 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s    %(message)s')
 # logging.disable(logging.CRITICAL)
 
 
-# https://manganelo.com/chapter/bqyp275111576304835/chapter_0
 
 def hot_mangas(start_page):
     req = requests.get(start_page).content
     soup = bs4.BeautifulSoup(req, 'html.parser')
     sleep(0.1)
     mangas = soup.find_all('a', {'class': 'genres-item-name text-nowrap a-h'})
-
-    dict_title_linkHome = {}
-    for i in mangas:
-        logging.debug(i)
-
-        title = i.get('title')
-        i = i.get('href')
-        dict_title_linkHome[title] = i
-    return dict_title_linkHome
+    result = [i.get('href') for i in mangas]
+    return result
 
 
-def from_starter_page_links_and_titles_of_chapters(particular_manga):
-    req = requests.get(particular_manga).content
-    soup = bs4.BeautifulSoup(req, 'html.parser')
-    sleep(0.1)
-    mangas = soup.find_all('a', {'class': "chapter-name text-nowrap"})
-    title_and_link = {}
-
-    for i in mangas:
-        title = i.get('title')
-        href = i.get('href')
-        title_and_link[title] = href
-    return title_and_link
+# def from_starter_page_links_and_titles_of_chapters(particular_manga):
+#     req = requests.get(particular_manga).content
+#     soup = bs4.BeautifulSoup(req, 'html.parser')
+#     sleep(0.1)
+#     mangas = soup.find_all('a', {'class': "chapter-name text-nowrap"})
+#     title_and_link = {}
+#
+#     for i in mangas:
+#         title = i.get('title')
+#         href = i.get('href')
+#         title_and_link[title] = href
+#     return title_and_link
 
 
 def manga_page_scrap(link):
@@ -57,6 +50,25 @@ def manga_page_scrap(link):
     return links
 
 
+def get_info(manga):
+    req = requests.get(manga).content
+    soup = bs4.BeautifulSoup(req, 'html.parser')
+    sleep(0.5)
+    front_photo = soup.find('img', {'class': 'img-loading'}).get('src')
+    description = soup.find('div', {'id': 'panel-story-info-description'}).text
+    alternative_names = soup.find('td', {'class': 'table-value'}).text
+    chapters = [i.get('href') for i in soup.find_all('a', {'class': "chapter-name text-nowrap"})]
+    step_1 = soup.find('table', {'class': 'variations-tableInfo'})
+    for_name = step_1.find('a', {'class': 'a-h'})
+    name = for_name.text
+    author = step_1.find('a', {'class': 'a-h'})
+    author=author.text
+    genres = step_1.find_all('td', {'class': 'table-value'})
+    genres = genres[-1].get_text()
+    return {'name': name, 'author': author, 'alternative_names': alternative_names,
+            'description': description, 'front_photo': front_photo, 'genres': genres, 'chapters': chapters}
+
+
 # def go_to_next_chapter(soup):
 #     link = soup.find('a', {'class': 'navi-change-chapter-btn-next a-h'}).get('href')
 #     return link
@@ -64,12 +76,12 @@ def manga_page_scrap(link):
 
 def main():
     mangas = hot_mangas('https://manganelo.com/genre-all?type=topview')
-    for manga_name, manga_home_link in mangas.items():
-
-        links_and_titles = from_starter_page_links_and_titles_of_chapters(manga_home_link)
-        for title, link in links_and_titles.items():
-            link = manga_page_scrap(link)
-            print(f'{title} --> {link}')
+    for manga in mangas:
+        manga_everything = get_info(manga)
+        print(manga_everything)
+        for chapter in manga_everything['chapters']:
+            chapter_photos = manga_page_scrap(chapter)
+            print(chapter_photos)
 
 
 # firebase.post('/manga-aa86c/manga', some_data)
