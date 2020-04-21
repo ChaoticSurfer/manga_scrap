@@ -1,11 +1,15 @@
 import bs4
 import requests
 import logging
-from collections import defaultdict
-import pprint
+# from firebase import firebase
 from time import sleep
 
+# firebase = firebase.FirebaseApplication('https://manga-aa86c.firebaseio.com/', None)
+
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s    %(message)s')
+
+
+# logging.disable(logging.CRITICAL)
 
 
 # https://manganelo.com/chapter/bqyp275111576304835/chapter_0
@@ -13,37 +17,31 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s    %(message)s')
 def hot_mangas(start_page):
     req = requests.get(start_page).content
     soup = bs4.BeautifulSoup(req, 'html.parser')
+    sleep(0.1)
     mangas = soup.find_all('a', {'class': 'genres-item-name text-nowrap a-h'})
-    # for i in mangas:
-    #     i = str(i.get('href'))
-    #     after_sym = i[i.rfind('/')::]
-    #     # print(after_sym)
-    #     i = 'https://manganelo.com/chapter' + after_sym + '/chapter_0'
-    #     # print(i)
-    result = []
+
+    dict_title_linkHome = {}
     for i in mangas:
+        logging.debug(i)
+
+        title = i.get('title')
         i = i.get('href')
-        result.append(i)
-    return result
-
-
-# არ დამიმთავრებია გადავწყვიტე რომ უკეთესი ვარიანტი არსებობს
-print(hot_mangas('https://manganelo.com/genre-all?type=topview'))
+        dict_title_linkHome[title] = i
+    return dict_title_linkHome
 
 
 def from_starter_page_links_and_titles_of_chapters(particular_manga):
     req = requests.get(particular_manga).content
     soup = bs4.BeautifulSoup(req, 'html.parser')
+    sleep(0.1)
     mangas = soup.find_all('a', {'class': "chapter-name text-nowrap"})
     title_and_link = {}
+
     for i in mangas:
         title = i.get('title')
         href = i.get('href')
         title_and_link[title] = href
     return title_and_link
-
-
-print(from_starter_page_links_and_titles_of_chapters('https://manganelo.com/manga/hyer5231574354229'))
 
 
 def manga_page_scrap(link):
@@ -66,16 +64,15 @@ def manga_page_scrap(link):
 
 def main():
     mangas = hot_mangas('https://manganelo.com/genre-all?type=topview')
-    for manga in mangas:
-        logging.debug(manga)
-        links_and_titles = from_starter_page_links_and_titles_of_chapters(manga)
+    for manga_name, manga_home_link in mangas.items():
+
+        links_and_titles = from_starter_page_links_and_titles_of_chapters(manga_home_link)
         for title, link in links_and_titles.items():
-            logging.debug(f'{title, link}')
             link = manga_page_scrap(link)
             print(f'{title} --> {link}')
 
 
-
+# firebase.post('/manga-aa86c/manga', some_data)
 
 if __name__ == '__main__':
     main()
