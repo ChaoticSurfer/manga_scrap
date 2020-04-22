@@ -14,14 +14,12 @@ logging.disable(logging.CRITICAL)
 
 def hot_mangas(start_page):
     r = requests.get(start_page).content
-    if r.status_code == 200:
-        soup = bs4.BeautifulSoup(r, 'html.parser')
-        sleep(0.1)
-        mangas = soup.find_all('a', {'class': 'genres-item-name text-nowrap a-h'})
-        result = [i.get('href') for i in mangas]
-        return result
-    else:
-        raise AssertionError('some Eror')
+    soup = bs4.BeautifulSoup(r, 'html.parser')
+    sleep(0.1)
+    mangas = soup.find_all('a', {'class': 'genres-item-name text-nowrap a-h'})
+    result = [i.get('href') for i in mangas]
+    return result
+
 
 # def from_starter_page_links_and_titles_of_chapters(particular_manga):
 #     req = requests.get(particular_manga).content
@@ -59,6 +57,7 @@ def get_info(manga):
     alternative_names = soup.find('td', {'class': 'table-value'}).text
     step_1 = soup.find('table', {'class': 'variations-tableInfo'})
     for_name = step_1.find('a', {'class': 'a-h'})
+    print(for_name)
     name = for_name.text
     author = step_1.find('a', {'class': 'a-h'})
     author = author.text
@@ -69,7 +68,7 @@ def get_info(manga):
     return {'name': name, 'author': author, 'alternative_names': alternative_names,
             'description': description, 'front_photo': front_photo, 'genres': genres, 'chapters': chapters}
 
-
+print(get_info('https://mangakakalot.com/manga/fq922542'))
 # def go_to_next_chapter(soup):
 #     link = soup.find('a', {'class': 'navi-change-chapter-btn-next a-h'}).get('href')
 #     return link
