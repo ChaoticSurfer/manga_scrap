@@ -28,35 +28,43 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s    %(message)s')
 
 
 def hot_mangas(start_page):
-    r = requests.get(start_page).content
-    soup = bs4.BeautifulSoup(r, 'html.parser')
-    sleep(0.1)
-    mangas = soup.find_all('a', {'class': 'genres-item-name text-nowrap a-h'})
-    result = [i.get('href') for i in mangas]
-    return result
+    r = requests.get(start_page)
+    if r.status_code == 200:
+        r = r.content
+        soup = bs4.BeautifulSoup(r, 'html.parser')
+        sleep(0.1)
+        mangas = soup.find_all('a', {'class': 'genres-item-name text-nowrap a-h'})
+        result = [i.get('href') for i in mangas]
+        return result
+    else:
+        hot_mangas(start_page)
+        print('hot manga fail')
 
 
 def manga_page_scrap(link):
-    r = requests.get(link).content
-    sleep(0.4)
-    soup = bs4.BeautifulSoup(r, 'html.parser')
-    # return [i.get('src') for i in soup.find_all('img') if i.get('src').endswith('.jpg')]
-    img = soup.find_all('img')
-    links = []
-    for i in img:
-        i = str(i.get('src'))
-        if i.endswith('.jpg'):
-            links.append(i)
-
-    return links
-
+    r = requests.get(link)
+    if r.status_code == 200:
+        r = r.content
+        sleep(0.35)
+        soup = bs4.BeautifulSoup(r, 'html.parser')
+        # return [i.get('src') for i in soup.find_all('img') if i.get('src').endswith('.jpg')]
+        img = soup.find_all('img')
+        links = []
+        for i in img:
+            i = str(i.get('src'))
+            if i.endswith('.jpg'):
+                links.append(i)
+        return links
+    else:
+        manga_page_scrap(link)
+        print('mangaPageScrap Fail')
 
 def get_info(manga):
-    req = requests.get(manga)
-    if req.status_code == 200:
-        req = req.content
-        soup = bs4.BeautifulSoup(req, 'html.parser')
-        sleep(0.4)
+    r = requests.get(manga)
+    if r.status_code == 200:
+        r = r.content
+        soup = bs4.BeautifulSoup(r, 'html.parser')
+        sleep(0.35)
         front_photo = soup.find('img', {'class': 'img-loading'}).get('src')
         description = soup.find('div', {'id': 'panel-story-info-description'}).text
         alternative_names = soup.find('td', {'class': 'table-value'}).text
@@ -76,7 +84,7 @@ def get_info(manga):
                 'description': description, 'front_photo': front_photo, 'genres': genres, 'chapters': chapters}
     else:
         get_info(manga)
-        print('Fail')
+        print('GEt_Info_Fail')
 
 
 # def go_to_next_chapter(soup):
